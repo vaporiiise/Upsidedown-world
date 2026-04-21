@@ -659,6 +659,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4990358275160218458, guid: cad43ebebc55c4e4a9bb7427cea404fb, type: 3}
+      propertyPath: m_Mass
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5426386608147870274, guid: cad43ebebc55c4e4a9bb7427cea404fb, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.5
@@ -1458,7 +1462,7 @@ PrefabInstance:
       objectReference: {fileID: 1819118701}
     - target: {fileID: 8560197110012699105, guid: cd7c18aac44df554c84b5cd093b9afa7, type: 3}
       propertyPath: m_GravityScale
-      value: 3
+      value: -3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

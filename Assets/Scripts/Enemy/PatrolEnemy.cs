@@ -54,6 +54,8 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
 
     public void Damage(float damage)
     {
+        healthPoints-=damage;
+        
         if (healthPoints <= 0)
             Destroy(this.gameObject);
     }
