@@ -32,4 +32,15 @@ public class GravityManager : MonoBehaviour, IDamageable
         scale.y = _isUpsideDown ? -_initialScaleY : _initialScaleY;
         transform.localScale = scale;
     }
+    
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (_rb.linearVelocity.magnitude > 10f) 
+        {
+            if (TryGetComponent(out IDamageable health))
+            {
+                health.Damage(1f); 
+            }
+        }
+    }
 }

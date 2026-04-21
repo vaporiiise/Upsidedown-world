@@ -40,7 +40,7 @@ public class PlayerAnimations : MonoBehaviour
         _player.TriggerAttackKnockback();
     }
 
-    public void PlayLightAttack() => _anim.SetTrigger("Attack");
+    public void PlayAttack() => _anim.SetTrigger("Attack");
     public void PlayHeavyAttack() => _anim.SetTrigger("Attack2");
     public void SetAttackHold() => _anim.SetBool("isHoldingAttack", true);
     public void UnSetAttackHold() => _anim.SetBool("isHoldingAttack", false);

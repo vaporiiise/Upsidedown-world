@@ -32,7 +32,9 @@ public class PlayerController : MonoBehaviour
     
     [Header("Knockback")]
     public float knockbackForce;
-    public float upForceMultiplier = 1.5f; 
+    public float upForceMultiplier = 1.5f;
+    
+    
 
     private bool _isHoldingAttack;
     private Rigidbody2D _rb;
@@ -123,52 +125,109 @@ public class PlayerController : MonoBehaviour
     {
         if (context.started && !_isBlocking && _canAttack)
         {
-
-            _attackStartTime = Time.time;
-            _playerAnim.SetAttackHold();
-        }
-
-        if (context.canceled && !_isBlocking && _canAttack)
-        {
-            
-            float holdDuration = Time.time - _attackStartTime;
-            _playerAnim.UnSetAttackHold();
-
-        
-            Debug.Log($"Hold Duration: {holdDuration} | Threshold: {heavyAttackThreshold}");
-
             _canAttack = false;
             StartCoroutine(AttackCooldownRoutine());
+        
+            if (_playerAnim != null) _playerAnim.PlayAttack(); 
 
-            if (holdDuration >= heavyAttackThreshold)
-            {
-                _playerAnim.PlayHeavyAttack(); 
-            }
-            else
-            {
-                _playerAnim.PlayLightAttack(); 
-            }
+            TriggerAttackImpact(); 
         }
     }
-    public void TriggerAttackImpact()
+    private IEnumerator HitResponse()
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(_attackPoint.position, attackRadius, interactableLayer);
-        bool hitGravityObject = false;
+        float originalScale = Time.timeScale;
+        Time.timeScale = 0f;
+        yield return new WaitForSecondsRealtime(0.07f); 
+        Time.timeScale = originalScale;
 
-        foreach (Collider2D hit in hits)
-        {
-            if (hit.TryGetComponent(out IDamageable target))
-            {
-                target.Damage(1f);
-                if (hit.GetComponent<GravityManager>() != null) hitGravityObject = true;
-            }
-        }
+    }
+    [Header("Zip Combat")]
+[SerializeField] private float detectionRadius = 5f; 
+[SerializeField] private float zipDuration = 0.1f;
+private bool _isZipping = false;
 
-        if (hitGravityObject)
+public void TriggerAttackImpact()
+{
+    Collider2D[] potentialTargets = Physics2D.OverlapCircleAll(transform.position, detectionRadius, interactableLayer);
+    Transform bestTarget = null;
+
+    foreach (var col in potentialTargets)
+    {
+        if (col.CompareTag("Enemy"))
         {
-            if (TryGetComponent(out GravityManager myGravity)) myGravity.ToggleGravity();
+            bestTarget = col.transform;
+            break; // Found one!
         }
     }
+
+    if (bestTarget != null && !_isZipping)
+    {
+        Debug.Log("Floating Enemy Detected! Zipping...");
+        StartCoroutine(ZipToEnemy(bestTarget));
+    }
+    else
+    {
+        DoNormalHitLogic();
+    }
+}
+
+private void DoNormalHitLogic()
+{
+    Collider2D[] hits = Physics2D.OverlapCircleAll(_attackPoint.position, attackRadius, interactableLayer);
+    
+    foreach (Collider2D hit in hits)
+    {
+        if (hit.TryGetComponent(out IDamageable target))
+        {
+            target.Damage(1f);
+
+            if (_isZipping && hit.CompareTag("Enemy"))
+            {
+                Debug.Log("Impact during Zip! Flipping Gravity.");
+                if (TryGetComponent(out GravityManager gm)) gm.ToggleGravity();
+            }
+            else if (hit.GetComponent<GravityManager>() != null)
+            {
+                if (TryGetComponent(out GravityManager gm)) gm.ToggleGravity();
+            }
+        }
+    }
+}
+
+private IEnumerator ZipToEnemy(Transform target)
+{
+    _isZipping = true;
+    _rb.bodyType = RigidbodyType2D.Kinematic;
+    _rb.linearVelocity = Vector2.zero;
+
+    Vector3 startPos = transform.position;
+    float side = (startPos.x < target.position.x) ? -0.8f : 0.8f;
+    Vector3 targetPos = target.position + new Vector3(side, 0, 0);
+
+    float elapsed = 0;
+    while (elapsed < zipDuration)
+    {
+        transform.position = Vector3.Lerp(startPos, targetPos, elapsed / zipDuration);
+        elapsed += Time.deltaTime;
+        yield return null;
+    }
+
+    transform.position = targetPos;
+
+    DoNormalHitLogic();
+
+    yield return new WaitForSeconds(0.1f);
+    _rb.bodyType = RigidbodyType2D.Dynamic;
+    _isZipping = false;
+}
+
+private void OnDrawGizmos()
+{
+    Gizmos.color = Color.cyan;
+    Gizmos.DrawWireSphere(transform.position, detectionRadius);
+}
+
+
 
     public void TriggerAttackKnockback()
     {
