@@ -8,6 +8,7 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
     public float speed = 2f;
     public float attackRange = 1f;
     public LayerMask playerLayer;
+    public float healthPoints = 5;
     
     private Vector3 _target;
     private bool _canFlip = true;
@@ -51,7 +52,11 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
         _canFlip = true;
     }
 
-    public void Damage(float damage) => Destroy(gameObject);
+    public void Damage(float damage)
+    {
+        if (healthPoints <= 0)
+            Destroy(this.gameObject);
+    }
 
     void FlipSprite()
     {

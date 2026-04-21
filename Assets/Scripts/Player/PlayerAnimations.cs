@@ -7,6 +7,8 @@ public class PlayerAnimations : MonoBehaviour
     private Rigidbody2D _rb;
     private PlayerController _player;
 
+    public float heavyAttackTimer = 0.5f;
+
     void Awake()
     {
         _anim = GetComponent<Animator>();
@@ -26,11 +28,20 @@ public class PlayerAnimations : MonoBehaviour
 
         _anim.SetBool("isBlocking", _player.IsBlocking());
     }
-
-    public void PlayAttack() => _anim.SetTrigger("Attack");
+    
 
     public void AE_AttackImpact()
     {
         _player.TriggerAttackImpact();
     }
+
+    public void AE_AttackKnockback()
+    {
+        _player.TriggerAttackKnockback();
+    }
+
+    public void PlayLightAttack() => _anim.SetTrigger("Attack");
+    public void PlayHeavyAttack() => _anim.SetTrigger("Attack2");
+    public void SetAttackHold() => _anim.SetBool("isHoldingAttack", true);
+    public void UnSetAttackHold() => _anim.SetBool("isHoldingAttack", false);
 }
