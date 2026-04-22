@@ -23,10 +23,13 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
     private Rigidbody2D _rb;
     private bool _canFlipGravity = true;
     private bool _isLaunched = false;
+    private PlayerController _player;
+    
 
     void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
+        _shakeTrigger = Object.FindFirstObjectByType<CameraShakeTrigger>();
     }
 
     void Start()
@@ -54,6 +57,14 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
             FlipSprite();
         }
     }
+    
+    public void PrepareForSlam()
+    {
+        if (_launchRoutine != null) StopCoroutine(_launchRoutine);
+        _isLaunched = true; 
+        _rb.bodyType = RigidbodyType2D.Dynamic; 
+        _rb.linearVelocity = Vector2.zero;
+    }
 
     private void CheckForPlayerBlock()
     {
@@ -78,6 +89,7 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
     public void Damage(float damage)
     {
         healthPoints -= damage;
+        
         if (healthPoints <= 0) { Die(); return; }
 
         if (!_isLaunched) 
@@ -107,10 +119,7 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
         _launchRoutine = null;
     }
 
-    private void Die()
-    {
-        Destroy(gameObject);
-    }
+    
 
     private IEnumerator BlockCooldown()
     {
@@ -125,6 +134,36 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
         Vector3 scale = transform.localScale;
         scale.x *= -1;
         transform.localScale = scale;
+    }
+    
+    [Header("VFX")]
+    public GameObject deathEffectPrefab; 
+    private CameraShakeTrigger _shakeTrigger; 
+
+    private void Die()
+    {
+        if (_shakeTrigger != null)
+        {
+            _shakeTrigger.ShakeCameraCustom(0.8f); 
+        }
+
+        PlayerController player = Object.FindFirstObjectByType<PlayerController>();
+        if (player != null)
+        {
+            player.StartCoroutine(player.HitStop(0.2f)); 
+        
+            if (player.TryGetComponent(out GravityManager gm))
+            {
+                gm.ToggleGravity();
+            }
+        }
+
+        if (deathEffectPrefab != null)
+        {
+            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+        }
+
+        Destroy(gameObject);
     }
 
     private void OnDrawGizmosSelected()

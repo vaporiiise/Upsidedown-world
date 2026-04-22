@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Animator))]
 public class PlayerAnimations : MonoBehaviour
@@ -6,8 +7,12 @@ public class PlayerAnimations : MonoBehaviour
     private Animator _anim;
     private Rigidbody2D _rb;
     private PlayerController _player;
+    private Coroutine _comboResetCoroutine;
 
     public float heavyAttackTimer = 0.5f;
+    public float comboResetDelay = 1.0f; 
+    
+    private int _attackStep = 0;
 
     void Awake()
     {
@@ -40,8 +45,61 @@ public class PlayerAnimations : MonoBehaviour
         _player.TriggerAttackKnockback();
     }
 
-    public void PlayAttack() => _anim.SetTrigger("Attack");
-    public void PlayHeavyAttack() => _anim.SetTrigger("Attack2");
+    public void PlayAttack()
+    {
+        _anim.SetInteger("AttackIndex", _attackStep);
+        
+        _anim.SetTrigger("Attack");
+
+        _attackStep = (_attackStep == 0) ? 1 : 0;
+        
+        if (_comboResetCoroutine != null) StopCoroutine(_comboResetCoroutine);
+        _comboResetCoroutine = StartCoroutine(ResetComboTimer());
+    }
+
+    public void PlayCombo()
+    {
+        _anim.SetTrigger("IsOnAir");
+        _anim.SetTrigger("Combo");
+    }
+    
+    public void PlayAttackLogic(bool isInAir)
+    {
+        _anim.SetBool("IsOnAir", isInAir);
+
+        if (isInAir)
+        {
+            _anim.ResetTrigger("Attack");
+            _anim.ResetTrigger("Combo");
+
+            _anim.SetTrigger("Combo");
+        }
+        else
+        {
+            _anim.ResetTrigger("Combo");
+            _anim.SetInteger("AttackIndex", _attackStep);
+            _anim.SetTrigger("Attack");
+
+            _attackStep = (_attackStep == 0) ? 1 : 0;
+
+            if (_comboResetCoroutine != null) StopCoroutine(_comboResetCoroutine);
+            _comboResetCoroutine = StartCoroutine(ResetComboTimer());
+        }
+    }
+
+    private IEnumerator ResetComboTimer()
+    {
+        yield return new WaitForSeconds(comboResetDelay);
+        _attackStep = 0; 
+        _comboResetCoroutine = null;
+    }    public void PlayHeavyAttack() => _anim.SetTrigger("Attack2");
     public void SetAttackHold() => _anim.SetBool("isHoldingAttack", true);
     public void UnSetAttackHold() => _anim.SetBool("isHoldingAttack", false);
+    
+    public void AE_FinishAirAttack()
+    {
+
+        _anim.ResetTrigger("Combo");
+        _anim.SetBool("IsOnAir",false);
+    }
 }
