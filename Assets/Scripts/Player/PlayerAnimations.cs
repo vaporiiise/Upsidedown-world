@@ -45,6 +45,16 @@ public class PlayerAnimations : MonoBehaviour
         _player.TriggerAttackKnockback();
     }
 
+    public void PlayGotHit()
+    {
+        _anim.SetTrigger("Hit");
+    }
+
+    public void PlayDeath()
+    {
+        _anim.SetTrigger("Die");
+    }
+
     public void PlayAttack()
     {
         _anim.SetInteger("AttackIndex", _attackStep);

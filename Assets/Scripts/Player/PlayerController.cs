@@ -214,13 +214,51 @@ public class PlayerController : MonoBehaviour
             if (hit.TryGetComponent(out IDamageable target))
             {
                 target.Damage(1f);
+                
                 if (hit.TryGetComponent(out Rigidbody2D enemyRb))
                 {
+                    // --- NEW: Subtle flinch knockback ---
+                    ApplyTinyFlinch(enemyRb);
+                    // ------------------------------------
+
                     if (isGrounded) LaunchEnemy(enemyRb);
                     else ApplyAirJuggle(enemyRb);
                 }
             }
         }
+    }
+
+    // Helper method for the "teeny tiny" knockback
+    private void ApplyTinyFlinch(Rigidbody2D enemyRb)
+    {
+        // Calculate direction away from the player
+        float dir = Mathf.Sign(enemyRb.transform.position.x - transform.position.x);
+        
+        // Reset velocity first for consistent feel
+        enemyRb.linearVelocity = new Vector2(0, enemyRb.linearVelocity.y);
+        
+        // Apply a very small horizontal nudge (adjust 2f to your liking)
+        enemyRb.AddForce(new Vector2(dir * 2f, 0f), ForceMode2D.Impulse);
+    }
+
+    public void TriggerAttackKnockback()
+    {
+        Collider2D[] hits = Physics2D.OverlapCircleAll(_attackPoint.position, attackRadius, interactableLayer);
+        bool hitGravityObject = false;
+        foreach (Collider2D hit in hits)
+        {
+            if (hit.TryGetComponent(out IDamageable target))
+            {
+                target.Damage(1f);
+                if (hit.TryGetComponent(out Rigidbody2D enemyRb)) 
+                {
+                    ApplyTinyFlinch(enemyRb); // Apply tiny flinch here too
+                    ApplyKnockbackToObject(enemyRb);
+                }
+                if (hit.GetComponent<GravityManager>() != null) hitGravityObject = true;
+            }
+        }
+        if (hitGravityObject && _gravityManager != null) _gravityManager.ToggleGravity();
     }
 
     private void LaunchEnemy(Rigidbody2D enemyRb)
@@ -236,22 +274,7 @@ public class PlayerController : MonoBehaviour
         enemyRb.AddForce(Vector2.up * 2f, ForceMode2D.Impulse);
     }
 
-    public void TriggerAttackKnockback()
-    {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(_attackPoint.position, attackRadius, interactableLayer);
-        bool hitGravityObject = false;
-        foreach (Collider2D hit in hits)
-        {
-            if (hit.TryGetComponent(out IDamageable target))
-            {
-                target.Damage(1f);
-                if (hit.TryGetComponent(out Rigidbody2D enemyRb)) ApplyKnockbackToObject(enemyRb);
-                if (hit.GetComponent<GravityManager>() != null) hitGravityObject = true;
-            }
-        }
-        if (hitGravityObject && _gravityManager != null) _gravityManager.ToggleGravity();
-    }
-
+   
     private void ApplyKnockbackToObject(Rigidbody2D targetRb)
     {
         targetRb.linearVelocity = Vector2.zero; 
@@ -318,7 +341,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (col.CompareTag("Enemy") && col.TryGetComponent(out PatrolEnemy enemy)) 
                 {
-                    if (enemy.healthPoints > 5) { enemy.PrepareForSlam(); PerformSuperLaunch(col.gameObject); break; }
+                    if (enemy.healthPoints > 5) {PerformSuperLaunch(col.gameObject); break; }
                 }
             }
         }
