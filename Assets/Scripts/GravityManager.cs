@@ -1,4 +1,5 @@
 using UnityEngine;
+using System; // Required for Action
 
 public class GravityManager : MonoBehaviour, IDamageable
 {
@@ -9,6 +10,9 @@ public class GravityManager : MonoBehaviour, IDamageable
 
     [SerializeField] private bool isFixedObject = false;
 
+    // This is the "Global Radio Station"
+    public static Action OnGlobalFlip;
+
     void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
@@ -16,9 +20,18 @@ public class GravityManager : MonoBehaviour, IDamageable
         _initialScaleY = transform.localScale.y;
     }
 
+    // When the object is created, it starts listening for the flip
+    private void OnEnable() => OnGlobalFlip += ToggleGravity;
+    
+    // When the object is destroyed, it stops listening
+    private void OnDisable() => OnGlobalFlip -= ToggleGravity;
+
     public void Damage(float damage)
     {
-        ToggleGravity();
+        // If you want hitting an enemy to trigger a global flip, keep this:
+        // OnGlobalFlip?.Invoke(); 
+        
+        // Otherwise, just kill the enemy here
     }
 
     public void ToggleGravity()
