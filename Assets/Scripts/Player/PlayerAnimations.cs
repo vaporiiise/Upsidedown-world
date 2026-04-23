@@ -31,18 +31,18 @@ public class PlayerAnimations : MonoBehaviour
         float relativeVerticalSpeed = _rb.linearVelocity.y * Mathf.Sign(_rb.gravityScale);
         _anim.SetFloat("VerticalVelocity", relativeVerticalSpeed);
 
-        //_anim.SetBool("isBlocking", _player.IsBlocking());
+        _anim.SetBool("isBlocking", _player.IsBlocking());
     }
     
 
     public void AE_AttackImpact()
     {
-        //_player.TriggerAttackImpact();
+        _player.TriggerAttackImpact();
     }
 
     public void AE_AttackKnockback()
     {
-        //_player.TriggerAttackKnockback();
+        _player.TriggerAttackKnockback();
     }
 
     public void PlayGotHit()
@@ -57,7 +57,6 @@ public class PlayerAnimations : MonoBehaviour
 
     public void PlayDash(bool isDashing)
     {
-        // Set a Bool in the Animator called "IsDashing"
         _anim.SetBool("IsDashing", isDashing);
     }
     public void PlayAttack()

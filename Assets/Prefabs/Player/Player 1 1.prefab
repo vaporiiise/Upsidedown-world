@@ -205,7 +205,7 @@ MonoBehaviour:
   jumpForce: 20
   isGrounded: 0
   _attackPoint: {fileID: 9075919308560312795}
-  attackRadius: 0.43
+  attackRadius: 1.2
   interactableLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -224,9 +224,6 @@ MonoBehaviour:
   airTime: 0.3
   slowFallGravity: 1
   maxSlowFallSpeed: 6
-  heavyAttackThreshold: 0.5
-  finisherLaunchForce: 20
-  slamDamage: 10
 --- !u!61 &3453081790942290431
 BoxCollider2D:
   m_ObjectHideFlags: 0

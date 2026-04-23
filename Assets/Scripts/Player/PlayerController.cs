@@ -6,11 +6,11 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 5f;
-    public float jumpForce = 12f; // Boosted slightly for better feel
+    public float jumpForce = 12f; 
     private bool _isFacingRight = true;
     public bool isGrounded;
     private int _jumpCount = 0; 
-    private float _jumpCooldownTimer; // NEW: Prevents instant ground reset
+    private float _jumpCooldownTimer; 
 
     [Header("Detection")]
     public Transform _attackPoint;
@@ -24,7 +24,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Ground Check")]
     public Transform groundCheckPoint;
-    public float groundRadius = 0.1f; // Keep this small
+    public float groundRadius = 0.1f; 
     public LayerMask groundLayer;
     
     [Header("Deflect Visuals")]
@@ -93,14 +93,12 @@ public class PlayerController : MonoBehaviour
     {
         if (!context.started || _isBlocking) return;
 
-        // Logic: Jump if grounded OR if we are in the air and have only jumped once
         if (isGrounded || _jumpCount == 1)
         {
             _jumpCount++;
-            _jumpCooldownTimer = 0.15f; // Block ground reset for 0.15s
-            isGrounded = false;         // Force false so FixedUpdate doesn't reset it same frame
+            _jumpCooldownTimer = 0.15f; 
+            isGrounded = false;         
 
-            // Gravity flip on 2nd jump
             if (_jumpCount == 2 && _gravityManager != null)
             {
                 _gravityManager.ToggleGravity();
@@ -108,13 +106,11 @@ public class PlayerController : MonoBehaviour
 
             float gravityDir = Mathf.Sign(_rb.gravityScale);
             
-            // Kill existing vertical velocity so the double jump feels snappy
             _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, 0); 
             _rb.AddForce(Vector2.up * jumpForce * gravityDir, ForceMode2D.Impulse);
         }
     }
 
-    // ... (Keep OnDeflect, StartFade, FadeShield, OnAttack, ZipToEnemy as is) ...
 
     public void OnDeflect(InputAction.CallbackContext context)
     {
@@ -217,9 +213,7 @@ public class PlayerController : MonoBehaviour
                 
                 if (hit.TryGetComponent(out Rigidbody2D enemyRb))
                 {
-                    // --- NEW: Subtle flinch knockback ---
                     ApplyTinyFlinch(enemyRb);
-                    // ------------------------------------
 
                     if (isGrounded) LaunchEnemy(enemyRb);
                     else ApplyAirJuggle(enemyRb);
@@ -228,16 +222,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Helper method for the "teeny tiny" knockback
     private void ApplyTinyFlinch(Rigidbody2D enemyRb)
     {
-        // Calculate direction away from the player
         float dir = Mathf.Sign(enemyRb.transform.position.x - transform.position.x);
         
-        // Reset velocity first for consistent feel
         enemyRb.linearVelocity = new Vector2(0, enemyRb.linearVelocity.y);
         
-        // Apply a very small horizontal nudge (adjust 2f to your liking)
         enemyRb.AddForce(new Vector2(dir * 2f, 0f), ForceMode2D.Impulse);
     }
 
@@ -252,7 +242,7 @@ public class PlayerController : MonoBehaviour
                 target.Damage(1f);
                 if (hit.TryGetComponent(out Rigidbody2D enemyRb)) 
                 {
-                    ApplyTinyFlinch(enemyRb); // Apply tiny flinch here too
+                    ApplyTinyFlinch(enemyRb); 
                     ApplyKnockbackToObject(enemyRb);
                 }
                 if (hit.GetComponent<GravityManager>() != null) hitGravityObject = true;
@@ -283,13 +273,10 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // 1. Update Cooldown Timer
         if (_jumpCooldownTimer > 0) _jumpCooldownTimer -= Time.fixedDeltaTime;
 
-        // 2. Perform Ground Check
         bool check = Physics2D.OverlapCircle(groundCheckPoint.position, groundRadius, groundLayer);
 
-        // 3. Only set isGrounded if we aren't in the middle of a jump burst
         if (_jumpCooldownTimer <= 0)
         {
             isGrounded = check;
