@@ -39,12 +39,16 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
     private Transform _playerTransform;
     private EnemyAnimations _anim; 
     private CameraShakeTrigger _shakeTrigger;
+    public AnimationCurve launchCurve;
+    public float launchDuration;
+    public float launchHeight;
 
     void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
         _anim = GetComponent<EnemyAnimations>(); 
         _shakeTrigger = Object.FindFirstObjectByType<CameraShakeTrigger>();
+        launchCurve = new AnimationCurve();
         
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null) _playerTransform = playerObj.transform;
@@ -104,7 +108,6 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
         {
             gm.ToggleGravity();
             _gravityTimer = gravityFlipCooldown;
-            Debug.Log("<color=orange>Enemy flipped gravity to chase!</color>");
         }
     }
 
@@ -171,6 +174,11 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
         {
             if (pc.IsBlocking())
             {
+                if (Time.time >= _nextAttackTime) 
+                {
+                    SuccessfulDeflectHeal();
+                }
+            
                 if (_canFlipGravity) CheckForPlayerBlock();
             }
             else
@@ -178,6 +186,18 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
                 if (Time.time >= _nextAttackTime) HandleRaycastAttack();
             }
         }
+    }
+
+    private void SuccessfulDeflectHeal()
+    {
+        _nextAttackTime = Time.time + attackInterval;
+
+        if (_playerTransform.TryGetComponent(out PlayerHealth ph))
+        {
+            ph.Heal(1f); 
+        }
+    
+        if (_anim != null) _anim.PlayGotHit();
     }
 
     private void HandleRaycastAttack()
@@ -251,25 +271,39 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
             StartCoroutine(GetLaunched());
         }
     }
-
-    private IEnumerator GetLaunched()
+    IEnumerator GetLaunched()
     {
-        _isLaunched = true; 
-        _rb.bodyType = RigidbodyType2D.Dynamic;
-        float gravityDir = Mathf.Sign(_rb.gravityScale);
+        _isLaunched = true;
+        
+        // Store original state
         float originalGravity = _rb.gravityScale;
-
-        _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, launchForce * gravityDir);
-        yield return new WaitForSeconds(0.2f); 
-
+        Vector2 startPos = _rb.position;
+        
+        // Prepare Rigidbody
+        _rb.gravityScale = 0;
         _rb.linearVelocity = Vector2.zero;
-        _rb.gravityScale = 0; 
 
-        yield return new WaitForSeconds(5.0f); 
+        float elapsed = 0f;
+        while (elapsed < launchDuration)
+        {
+            elapsed += Time.deltaTime;
+            float percent = elapsed / launchDuration;
 
+            // Evaluate the curve (0 to 1) and multiply by height
+            float curveValue = launchCurve.Evaluate(percent);
+            float targetY = startPos.y + (curveValue * launchHeight);
+
+            // MovePosition is better for physics-friendly interpolation
+            _rb.MovePosition(new Vector2(_rb.position.x, targetY));
+
+            yield return null;
+        }
+
+        // Reset
         _rb.gravityScale = originalGravity;
-        _isLaunched = false; 
+        _isLaunched = false;
     }
+    
 
     private void CheckForPlayerBlock()
     {
@@ -304,12 +338,21 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
             spawner.AddScore(_isLaunched); 
         }
 
+        SlowDownTime();
+
         if (_shakeTrigger != null) _shakeTrigger.ShakeCameraCustom(0.8f); 
         if (deathEffectPrefab != null) Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
     
         Destroy(gameObject);
     }
-    
+
+    private void SlowDownTime()
+    {
+        if (CombatCinematics.Instance != null)
+        {
+            CombatCinematics.Instance.TriggerKillEffect();
+        }
+    }
     public GameObject deathEffectPrefab; 
 
     private void OnDrawGizmosSelected()

@@ -270,6 +270,19 @@ public class PlayerController : MonoBehaviour
         targetRb.linearVelocity = Vector2.zero; 
         targetRb.AddForce(new Vector2(Mathf.Sign(targetRb.transform.position.x - transform.position.x) * 0.5f, upForceMultiplier).normalized * knockbackForce, ForceMode2D.Impulse);
     }
+    
+    public void NotifyDeflectSuccess()
+    {
+        StartCoroutine(DeflectFlash());
+    }
+
+    private IEnumerator DeflectFlash()
+    {
+        if (deflectSprite == null) yield break;
+        deflectSprite.color = Color.white; 
+        yield return new WaitForSeconds(0.05f);
+        deflectSprite.color = new Color(1, 1, 1, 0.5f); 
+    }
 
     private void FixedUpdate()
     {

@@ -1,11 +1,16 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Cinemachine; 
 
 public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [Header("Health Settings")]
     public float maxHealth = 10f;
     public float currentHealth;
+
+    [Header("UI & Juice")]
+    public HealthBarController healthBarController;
+    private CinemachineImpulseSource _impulseSource;
 
     [Header("I-Frames")]
     [SerializeField] private float iFrameDuration = 1.0f;
@@ -23,6 +28,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         currentHealth = maxHealth;
         _sprite = GetComponentInChildren<SpriteRenderer>();
         _anim = GetComponentInChildren<PlayerAnimations>();
+        _impulseSource = GetComponent<CinemachineImpulseSource>();
     }
 
     public void Damage(float damage)
@@ -30,7 +36,16 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         if (_isDead || _isInvulnerable) return;
 
         currentHealth -= damage;
-        Debug.Log($"<color=magenta>Damage Taken! Remaining:</color> {currentHealth}");
+
+        if (healthBarController != null)
+        {
+            healthBarController.OnHealthChanged(currentHealth, maxHealth);
+        }
+
+        if (_impulseSource != null)
+        {
+            _impulseSource.GenerateImpulse();
+        }
 
         if (currentHealth <= 0)
         {
@@ -41,6 +56,31 @@ public class PlayerHealth : MonoBehaviour, IDamageable
             if (_anim != null) _anim.PlayGotHit();
             StartCoroutine(HandleIFrames());
         }
+        
+        if (healthBarController != null)
+        {
+            healthBarController.OnHealthChanged(currentHealth, maxHealth, false); 
+        }
+    }
+    
+    public void Heal(float amount)
+    {
+        if (_isDead) return;
+
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        if (healthBarController != null)
+        {
+            healthBarController.OnHealthChanged(currentHealth, maxHealth);
+        }
+        
+        if (healthBarController != null)
+        {
+            healthBarController.OnHealthChanged(currentHealth, maxHealth, true);
+        }
+    
+        Debug.Log($"<color=cyan>Healed!</color> Current Health: {currentHealth}");
     }
 
     private IEnumerator HandleIFrames()
@@ -69,13 +109,18 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         if (_anim != null) _anim.PlayDeath();
         
-        // Stop player from moving while dying
         if (TryGetComponent(out PlayerController pc)) pc.enabled = false;
         if (TryGetComponent(out Rigidbody2D rb)) rb.linearVelocity = Vector2.zero;
 
         yield return new WaitForSeconds(deathDelay);
-
-        // Deactivate or Reload Scene
+        
+        EnemySpawner spawner = Object.FindFirstObjectByType<EnemySpawner>();
+        GameOverManager goManager = Object.FindFirstObjectByType<GameOverManager>();
+    
+        if (goManager != null) 
+        {
+            goManager.ShowGameOver(spawner != null ? spawner.totalScore : 0);
+        }
         gameObject.SetActive(false);
     }
 }

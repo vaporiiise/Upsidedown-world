@@ -187,13 +187,57 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  healthPoints: 2
-  attackRange: 1.5
+  healthPoints: 3
+  attackRange: 4
   contactDamage: 1
-  attackInterval: 1.5
+  attackInterval: 1
   launchForce: 10
   jumpForce: 10
   gravityFlipCooldown: 1.5
+  launchCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.6366638
+      value: 0.8147243
+      inSlope: 0.016573206
+      outSlope: 0.016573206
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.30223146
+    - serializedVersion: 3
+      time: 0.79998356
+      value: 0.81217057
+      inSlope: -0.0896502
+      outSlope: -0.0896502
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.08285871
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  launchDuration: 0
+  launchHeight: 0
   deathEffectPrefab: {fileID: 5459254969102926380, guid: 21482c74859b81544b38d0150149ef8c, type: 3}
 --- !u!50 &1631073875046808662
 Rigidbody2D:

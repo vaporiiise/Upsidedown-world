@@ -1,5 +1,5 @@
 using UnityEngine;
-using System; // Required for Action
+using System;
 
 public class GravityManager : MonoBehaviour, IDamageable
 {
@@ -44,7 +44,7 @@ public class GravityManager : MonoBehaviour, IDamageable
         Vector3 scale = transform.localScale;
         scale.y = _isUpsideDown ? -_initialScaleY : _initialScaleY;
         transform.localScale = scale;
-    }
+        }
     
     private void OnCollisionEnter2D(Collision2D collision)
     {

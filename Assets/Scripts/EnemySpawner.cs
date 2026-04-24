@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro; // Required for TextMeshPro
 
 public class EnemySpawner : MonoBehaviour
 {
@@ -8,11 +9,17 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemyPrefab;
     public Transform[] spawnPoints; 
 
+    [Header("UI References")]
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI timerText;
+    public GameObject gameOverPanel; 
+
     [Header("Session Settings")]
     public float sessionDuration = 120f; 
     private float _timer;
     private bool _isSessionActive = true;
     public int enemiesAtOnce = 6;
+    public GameOverManager gameOverUI;
 
     [Header("Score Tracking")]
     public int totalScore = 0;
@@ -22,7 +29,8 @@ public class EnemySpawner : MonoBehaviour
     void Start()
     {
         _timer = sessionDuration;
-        // Initial spawn
+        if(gameOverPanel != null) gameOverPanel.SetActive(false);
+        UpdateUI();
         FillEnemies();
     }
 
@@ -30,8 +38,9 @@ public class EnemySpawner : MonoBehaviour
     {
         if (!_isSessionActive) return;
 
-        // 1. Update Timer
         _timer -= Time.deltaTime;
+        UpdateUI();
+
         if (_timer <= 0)
         {
             EndSession();
@@ -46,6 +55,17 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    void UpdateUI()
+    {
+        if (scoreText != null) scoreText.text = $"Score: {totalScore}";
+        
+        if (timerText != null)
+        {
+            float seconds = Mathf.Max(0, _timer);
+            timerText.text = string.Format("{0:0}:{1:00}", Mathf.FloorToInt(seconds / 60), Mathf.FloorToInt(seconds % 60));
+        }
+    }
+
     void FillEnemies()
     {
         if (!_isSessionActive) return;
@@ -56,7 +76,6 @@ public class EnemySpawner : MonoBehaviour
         {
             Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
             GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint.position, Quaternion.identity);
-            
             _activeEnemies.Add(newEnemy);
         }
     }
@@ -65,18 +84,20 @@ public class EnemySpawner : MonoBehaviour
     {
         int points = killedInAir ? 500 : 200;
         totalScore += points;
-        Debug.Log($"<color=yellow>Points Added: {points}. Total Score: {totalScore}</color>");
+        UpdateUI(); 
     }
 
     void EndSession()
     {
         _isSessionActive = false;
-        Debug.Log($"<color=green>TIME UP! Final Score: {totalScore}</color>");
+        if(gameOverPanel != null) gameOverPanel.SetActive(true);
         
         foreach(var enemy in _activeEnemies)
         {
             if(enemy != null) Destroy(enemy);
         }
         _activeEnemies.Clear();
+        
+        if(gameOverUI != null) gameOverUI.ShowGameOver(totalScore);
     }
 }
